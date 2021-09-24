@@ -180,16 +180,19 @@ public class SwiftSoundStreamPlugin: NSObject, FlutterPlugin {
         }
         mRecordSampleRate = argsArr["sampleRate"] as? Double ?? mRecordSampleRate
         debugLogging = argsArr["showLogs"] as? Bool ?? debugLogging
-        mRecordFormat = AVAudioFormat(commonFormat: AVAudioCommonFormat.pcmFormatInt16, sampleRate: mRecordSampleRate, channels: 1, interleaved: true)
-        
-        checkAndRequestPermission { isGranted in
-            if isGranted {
-                self.sendRecorderStatus(SoundStreamStatus.Initialized)
-                self.sendResult(result, true)
-            } else {
-                self.sendResult(result, FlutterError( code: SoundStreamErrors.Unknown.rawValue,
-                                                      message:"Incorrect parameters",
-                                                      details: nil ))
+        print("setup audio with sample rate: \(mRecordSampleRate)")
+        DispatchQueue.main.async {
+            self.mRecordFormat = AVAudioFormat(commonFormat: AVAudioCommonFormat.pcmFormatInt16, sampleRate: self.mRecordSampleRate, channels: 1, interleaved: true)
+            
+            self.checkAndRequestPermission { isGranted in
+                if isGranted {
+                    self.sendRecorderStatus(SoundStreamStatus.Initialized)
+                    self.sendResult(result, true)
+                } else {
+                    self.sendResult(result, FlutterError( code: SoundStreamErrors.Unknown.rawValue,
+                                                          message:"Incorrect parameters",
+                                                          details: nil ))
+                }
             }
         }
     }
