@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import AVFoundation
+import Try
 
 public enum SoundStreamErrors: String {
     case FailedToRecord
@@ -197,37 +198,44 @@ public class SwiftSoundStreamPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    private func resetEngineForRecord() {
+    private func resetEngineForRecord() throws {
         mAudioEngine.inputNode.removeTap(onBus: mRecordBus)
         let input = mAudioEngine.inputNode
         let inputFormat = input.outputFormat(forBus: mRecordBus)
         let converter = AVAudioConverter(from: inputFormat, to: mRecordFormat!)!
         let ratio: Float = Float(inputFormat.sampleRate)/Float(mRecordFormat.sampleRate)
         
-        input.installTap(onBus: mRecordBus, bufferSize: mRecordBufferSize, format: inputFormat) { (buffer, time) -> Void in
-            let inputCallback: AVAudioConverterInputBlock = { inNumPackets, outStatus in
-                outStatus.pointee = .haveData
-                return buffer
-            }
+        try trap {
+            input.installTap(onBus: self.mRecordBus, bufferSize: self.mRecordBufferSize, format: inputFormat) { (buffer, time) -> Void in
+                let inputCallback: AVAudioConverterInputBlock = { inNumPackets, outStatus in
+                    outStatus.pointee = .haveData
+                    return buffer
+                }
             
-            let convertedBuffer = AVAudioPCMBuffer(pcmFormat: self.mRecordFormat!, frameCapacity: UInt32(Float(buffer.frameCapacity) / ratio))!
+                let convertedBuffer = AVAudioPCMBuffer(pcmFormat: self.mRecordFormat!, frameCapacity: UInt32(Float(buffer.frameCapacity) / ratio))!
             
-            var error: NSError?
-            let status = converter.convert(to: convertedBuffer, error: &error, withInputFrom: inputCallback)
-            assert(status != .error)
+                var error: NSError?
+                let status = converter.convert(to: convertedBuffer, error: &error, withInputFrom: inputCallback)
+                assert(status != .error)
             
-            if (self.mRecordFormat?.commonFormat == AVAudioCommonFormat.pcmFormatInt16) {
+                if (self.mRecordFormat?.commonFormat == AVAudioCommonFormat.pcmFormatInt16) {
                 let values = self.audioBufferToBytes(convertedBuffer)
                 self.sendMicData(values)
+                }
             }
         }
     }
     
     private func startRecording(_ result: @escaping FlutterResult) {
-        resetEngineForRecord()
-        startEngine()
-        sendRecorderStatus(SoundStreamStatus.Playing)
-        result(true)
+        do {
+            try self.resetEngineForRecord()
+            self.startEngine()
+            self.sendRecorderStatus(SoundStreamStatus.Playing)
+            self.result(true)
+        } catch {
+            print("start Recording error: \(error)")
+            self.result(false)
+        }
     }
     
     private func stopRecording(_ result: @escaping FlutterResult) {
