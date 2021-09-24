@@ -231,10 +231,10 @@ public class SwiftSoundStreamPlugin: NSObject, FlutterPlugin {
             try self.resetEngineForRecord()
             self.startEngine()
             self.sendRecorderStatus(SoundStreamStatus.Playing)
-            self.result(true)
+            result(true)
         } catch {
             print("start Recording error: \(error)")
-            self.result(false)
+            result(false)
         }
     }
     
