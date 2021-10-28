@@ -264,12 +264,12 @@ public class SoundStreamPlugin : FlutterPlugin,
 
     private fun startRecording(result: Result) {
         try {
-            if (mRecorder!!.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+            if (mRecorder?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                 result.success(true)
                 return
             }
             initRecorder()
-            mRecorder!!.startRecording()
+            mRecorder?.startRecording()
             sendRecorderStatus(SoundStreamStatus.Playing)
             result.success(true)
         } catch (e: IllegalStateException) {
@@ -280,11 +280,11 @@ public class SoundStreamPlugin : FlutterPlugin,
 
     private fun stopRecording(result: Result) {
         try {
-            if (mRecorder!!.recordingState == AudioRecord.RECORDSTATE_STOPPED) {
+            if (mRecorder?.recordingState == AudioRecord.RECORDSTATE_STOPPED) {
                 result.success(true)
                 return
             }
-            mRecorder!!.stop()
+            mRecorder?.stop()
             sendRecorderStatus(SoundStreamStatus.Stopped)
             result.success(true)
         } catch (e: IllegalStateException) {
@@ -352,7 +352,7 @@ public class SoundStreamPlugin : FlutterPlugin,
                 return
             }
 
-            mAudioTrack!!.play()
+            mAudioTrack?.play()
             sendPlayerStatus(SoundStreamStatus.Playing)
             result.success(true)
         } catch (e: Exception) {
@@ -379,10 +379,15 @@ public class SoundStreamPlugin : FlutterPlugin,
     private fun createRecordListener(): OnRecordPositionUpdateListener? {
         return object : OnRecordPositionUpdateListener {
             override fun onMarkerReached(recorder: AudioRecord) {
-                recorder.read(audioData!!, 0, mRecorderBufferSize)
+                if (audioData != null) {
+                    recorder.read(audioData!!, 0, mRecorderBufferSize)
+                }
             }
 
             override fun onPeriodicNotification(recorder: AudioRecord) {
+                if (audioData == null) {
+                    return
+                }
                 val data = audioData!!
                 val shortOut = recorder.read(data, 0, mPeriodFrames)
                 // https://flutter.io/platform-channels/#codec
