@@ -128,8 +128,8 @@ public class SoundStreamPlugin : FlutterPlugin,
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         methodChannel.setMethodCallHandler(null)
-        mListener?.onMarkerReached(null)
-        mListener?.onPeriodicNotification(null)
+//        mListener?.onMarkerReached(null)
+//        mListener?.onPeriodicNotification(null)
         mListener = null
         mRecorder?.stop()
         mRecorder?.release()
@@ -378,27 +378,24 @@ public class SoundStreamPlugin : FlutterPlugin,
 
     private fun createRecordListener(): OnRecordPositionUpdateListener? {
         return object : OnRecordPositionUpdateListener {
-            override fun onMarkerReached(recorder: AudioRecord?) {
+            override fun onMarkerReached(recorder: AudioRecord) {
                 if (audioData != null) {
-                    recorder?.read(audioData!!, 0, mRecorderBufferSize)
+                    recorder.read(audioData!!, 0, mRecorderBufferSize)
                 }
             }
 
-            override fun onPeriodicNotification(recorder: AudioRecord?) {
+            override fun onPeriodicNotification(recorder: AudioRecord) {
                 if (audioData == null) {
                     return
                 }
                 val data = audioData!!
-                val shortOut = recorder?.read(data, 0, mPeriodFrames)
+                val shortOut = recorder.read(data, 0, mPeriodFrames)
                 // https://flutter.io/platform-channels/#codec
                 // convert short to int because of platform-channel's limitation
-                shortOut?.let {
-                    val byteBuffer = ByteBuffer.allocate(it * 2)
-                    byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(data)
+                val byteBuffer = ByteBuffer.allocate(shortOut * 2)
+                byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(data)
 
-                    sendEventMethod("dataPeriod", byteBuffer.array())
-                }
-
+                sendEventMethod("dataPeriod", byteBuffer.array())
             }
         }
     }
