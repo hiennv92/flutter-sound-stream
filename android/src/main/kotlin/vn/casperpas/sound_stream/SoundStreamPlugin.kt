@@ -389,7 +389,10 @@ public class SoundStreamPlugin : FlutterPlugin,
                     return
                 }
                 val data = audioData!!
-                val shortOut = recorder?.read(data, 0, mPeriodFrames)
+                val shortOut = recorder?.read(data, 0, mPeriodFrames) ?: 0
+                // this condistion to prevent app crash from happening in Android Devices
+                // See issues: https://github.com/CasperPas/flutter-sound-stream/issues/25
+                if (shortOut < 1) { return }
                 // https://flutter.io/platform-channels/#codec
                 // convert short to int because of platform-channel's limitation
                 shortOut?.let {
