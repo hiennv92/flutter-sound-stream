@@ -179,8 +179,8 @@ public class SoundStreamPlugin : FlutterPlugin,
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>?,
-                                            grantResults: IntArray?): Boolean {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
+                                            grantResults: IntArray): Boolean {
         when (requestCode) {
             audioRecordPermissionCode -> {
                 if (grantResults != null) {
@@ -395,11 +395,8 @@ public class SoundStreamPlugin : FlutterPlugin,
                 if (shortOut < 1) { return }
                 // https://flutter.io/platform-channels/#codec
                 // convert short to int because of platform-channel's limitation
-                shortOut?.let {
+                shortOut.let {
                     try {
-                        if (it <= 0) {
-                            return
-                        }
                         val byteBuffer = ByteBuffer.allocate(it * 2)
                         byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(data)
 
